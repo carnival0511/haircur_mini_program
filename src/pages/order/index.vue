@@ -6,9 +6,14 @@
       <view class="header">
         <view class="header-dot"></view>
         <text class="header-title">订单列表</text>
+        <uv-icon name="setting-fill"
+                 color="#2979ff"
+                 size="24"
+                 @click="toSetting"></uv-icon>
       </view>
     </view>
-    <view class="wrapper" :style="{ marginTop: contentTop }">
+    <view class="wrapper"
+          :style="{ marginTop: contentTop }">
       <!-- 内容区 -->
       <view class="content">
         <scroll-view class="scroll-area"
@@ -51,6 +56,63 @@
                class="back-icon" />
       </view>
     </view>
+
+    <uv-popup ref="pageQueryRef"
+              custom-style="border-radius: 20rpx; background-color: #ffffff; color: #fff;"
+              :safeAreaInsetBottom="false"
+              :overlay="false">
+      <view class="page_query_modal">
+        <view class="search_title">
+          搜索条件
+        </view>
+        <uv-form :model="pageQuery"
+                 ref="pageQueryFormRef"
+                 label-width="120">
+          <uv-form-item label="开始日期"
+                        name="startDate"
+                        required>
+            <uv-input v-model="pageQuery.startDate"
+                      border="none"
+                      @focus="dateFocus('startDate')"
+                      @clear="beginTimeClear" />
+            <uv-datetime-picker ref="beginTimePicker"
+                                v-model="currentDate"
+                                mode="date"
+                                @confirm="beginTimeConfirm"
+                                :maxDate="maxDate">
+            </uv-datetime-picker>
+          </uv-form-item>
+          <uv-form-item label="结束日期"
+                        name="endDate"
+                        required>
+            <uv-input v-model="pageQuery.endDate"
+                      border="none"
+                      @focus="dateFocus('endDate')"
+                      @clear="endTimeClear" />
+            <uv-datetime-picker ref="endTimePicker"
+                                v-model="currentDate"
+                                mode="date"
+                                @confirm="endTimeConfirm"
+                                :minDate="minDate">
+            </uv-datetime-picker>
+          </uv-form-item>
+          <view class="modal_btn">
+            <uv-button size="large"
+                       type="error"
+                       shape="circle"
+                       text="确定"
+                       style="margin-top: 24rpx;"
+                       @click="pageQuerySubmit"></uv-button>
+            <uv-button size="large"
+                       shape="circle"
+                       text="取消"
+                       style="margin-top: 24rpx;"
+                       @click="pageQueryCancel"></uv-button>
+          </view>
+        </uv-form>
+      </view>
+    </uv-popup>
+
   </view>
 </template>
 <script setup>
@@ -58,7 +120,7 @@ import {
   reactive,
   toRefs,
   nextTick,
-  computed
+  ref
 } from 'vue'
 import {
   onShow,
@@ -91,13 +153,23 @@ const orderTypeClass = {
   '2': 'order_30'
 }
 
+const pageQueryRef = ref()
+const pageQueryFormRef = ref()
+const beginTimePicker = ref()
+const endTimePicker = ref()
+
 const Data = reactive({
   statusBarHeight: uni.getStorageSync('menuInfo').statusBarHeight,
   contentTop: uni.getStorageSync('menuInfo').contentTop,
   pageQuery: {
     pageSize: 20,
-    pageNum: 1
+    pageNum: 1,
+    startDate: '',
+    endData: ''
   },
+  currentDate: Number(new Date()),
+  maxDate: undefined,
+  minDate: undefined,
   orderListData: [
     {
       id: '20250101001',
@@ -204,12 +276,65 @@ const {
   contentTop,
   orderListData,
   pageQuery,
+  currentDate,
+  maxDate,
+  minDate,
   searchStatus,
   refresherEnabled,
   triggered,
   scrollTop,
   old,
 } = toRefs(Data)
+
+// 打开搜索条件
+const toSetting = () => {
+  pageQueryRef.value.open()
+}
+
+const dateFocus = (str) => {
+  if (str === 'startDate') {
+    if (Data.pageQuery.endDate) {
+      Data.maxDate = new Date(Data.pageQuery.endDate).getTime()
+    }
+    beginTimePicker.value.open()
+  } else {
+    if (Data.pageQuery.startDate) {
+      Data.minDate = new Date(Data.pageQuery.startDate).getTime()
+    }
+    endTimePicker.value.open()
+  }
+}
+
+const beginTimeClear = () => {
+  Data.minDate = new Date().getTime() - 10 * 365 * 24 * 3600 * 1000
+}
+
+const endTimeClear = () => {
+  Data.maxDate = new Date().getTime() + 10 * 365 * 24 * 3600 * 1000
+}
+
+const beginTimeConfirm = (e) => {
+  const date = new Date(e.value + 8 * 3600 * 1000);
+  const dateStr = date.toISOString().split('T')[0]
+  Data.pageQuery.startDate = dateStr
+}
+
+const endTimeConfirm = (e) => {
+  const date = new Date(e.value + 8 * 3600 * 1000);
+  const dateStr = date.toISOString().split('T')[0]
+  Data.pageQuery.endDate = dateStr
+}
+
+const pageQuerySubmit = () => {
+  Data.pageQuery.pageNum = 1
+  Data.orderListData = []
+  getOrderListData()
+  pageQueryRef.value.close()
+}
+
+const pageQueryCancel = () => {
+  pageQueryRef.value.close()
+}
 
 // 获取订单列表数据
 const getOrderListData = () => {
@@ -328,7 +453,7 @@ const checkStatus = item => {
   display: flex;
   align-items: center;
   background-color: #ffffff;
-  padding: 24rpx;
+  padding: 0 24rpx;
 }
 
 .header-dot {
@@ -342,6 +467,7 @@ const checkStatus = item => {
 .header-title {
   font-weight: 600;
   font-size: 32rpx;
+  margin-right: 24rpx;
 }
 
 /* 内容区 */
@@ -453,5 +579,30 @@ const checkStatus = item => {
 
 .flex_sty {
   display: flex;
+}
+
+// 搜索条件modal
+.page_query_modal {
+  padding: 12rpx;
+  border-radius: 10px;
+  box-shadow: #ccc;
+  border: 1px solid #ccc;
+  width: 300px;
+  padding: 24px;
+}
+
+.search_title {
+  font-weight: 600;
+  color: #000;
+  text-align: center;
+  margin-bottom: 24rpx;
+}
+
+.modal_btn {
+  display: flex;
+  column-gap: 24rpx;
+  width: 100%;
+  justify-content: space-around;
+  height: 80rpx;
 }
 </style>

@@ -9,6 +9,26 @@
                src="https://statics.moonshot.cn/kimi-web-seo/assets/kimi-logo-CegIMkbU.png"></image>
         <view class="header-title">Welcome to Lingdong Barber Shop</view>
       </view>
+      <uv-form :model="pageQuery">
+        <uv-form-item required
+                      label="理发车:"
+                      labelWidth="100"
+                      prop="hairCarNo"
+                      borderBottom
+                      :customStyle="{ margin: '24rpx' }">
+          <uv-input v-model="pageQuery.hairCarNo"
+                    border="none"
+                    suffix-icon="arrow-down"
+                    suffixIconStyle="color: #909399"
+                    @focus="showModalSelect" />
+        </uv-form-item>
+      </uv-form>
+      <uv-action-sheet ref="modalSelectRef"
+                       :actions="modalSelectOptions"
+                       :title="modalSelectTitle"
+                       :description="modalSelectDescription"
+                       @select="modalSelectHandle">
+      </uv-action-sheet>
       <view class="page-container">
         <view v-if="appointMsg.userAppointmentNum"
               class="book-info">
@@ -39,39 +59,109 @@
   </view>
 </template>
 
-<script setup lang="ts">
+<script setup>
 import { ref, reactive, toRefs } from "vue";
 import { onShow } from "@dcloudio/uni-app";
 import utils from "@/utils/index.js";
 
 const token = ref(uni.getStorageSync("token"));
-
+const modalSelectRef = ref()
 const Data = reactive({
   statusBarHeight: uni.getStorageSync("menuInfo").statusBarHeight,
   contentTop: uni.getStorageSync("menuInfo").contentTop,
   appointMsg: {},
+  modalSelectOptions: [], // 弹窗选项
+  modalSelectTitle: '',
+  modalSelectDescription: '',
+  pageQuery: {
+    userName: '',
+    hairCarNo: ''
+  }
 });
 
-const { statusBarHeight, contentTop, appointMsg } = toRefs(Data);
+const {
+  statusBarHeight,
+  contentTop,
+  appointMsg,
+  modalSelectOptions,
+  modalSelectTitle,
+  modalSelectDescription,
+  pageQuery,
+} = toRefs(Data);
+
+const showModalSelect = (value) => {
+  modalSelectRef.value.open()
+  uni.hideKeyboard()
+  Data.modalSelectOptions = [
+    {
+      id: 1,
+      name: '理发车1号:飞天园区C号楼1楼',
+    },
+    {
+      id: 2,
+      name: '理发车2号:西溪园区D号楼1楼',
+    },
+    {
+      id: 3,
+      name: '理发车3号:滨江园区A号楼1楼',
+    },
+    {
+      id: 4,
+      name: '理发车4号:西溪园区B号楼1楼',
+    },
+    {
+      id: 5,
+      name: '理发车5号:西溪园区B号楼1楼',
+    },
+    {
+      id: 6,
+      name: '理发车6号:西溪园区B号楼1楼',
+    },
+    {
+      id: 7,
+      name: '理发车7号:西溪园区B号楼1楼',
+    },
+    {
+      id: 8,
+      name: '理发车8号:西溪园区B号楼1楼',
+    }
+  ]
+  Data.modalSelectTitle = '请选择理发车'
+  Data.modalSelectDescription = ''
+}
+
+const modalSelectHandle = (e) => {
+  Data.pageQuery.hairCarNo = e.name
+}
 
 // 预约叫号
 const callNumber = utils.debounce(
-  async (msg: string) => {
-    // 调用叫号接口
-    uni.showToast({
-      title: msg,
-      icon: "none",
-      duration: 500,
-      mask: true,
-    });
-    setTimeout(() => {
-      Data.appointMsg = {
-        userAppointmentNum: "3", // 用户预约的号码，如果没有，证明当前用户刚登陆，但是没有叫号
-        currentHaircutNum: "1", // 当前理发师理发的人的号码
-        waitPersonNum: "2", // 当前等待理发的人数
-        waitTime: "20", // 等待理发的大概时间
-      };
-    }, 1000);
+  async (msg) => {
+    if (Data.pageQuery.hairCarNo == '') {
+      uni.showToast({
+        title: '请选择理发车',
+        icon: "none",
+        duration: 500,
+        mask: true,
+      });
+      return
+    } else {
+      // 调用叫号接口
+      uni.showToast({
+        title: msg,
+        icon: "none",
+        duration: 500,
+        mask: true,
+      });
+      setTimeout(() => {
+        Data.appointMsg = {
+          userAppointmentNum: "3", // 用户预约的号码，如果没有，证明当前用户刚登陆，但是没有叫号
+          currentHaircutNum: "1", // 当前理发师理发的人的号码
+          waitPersonNum: "2", // 当前等待理发的人数
+          waitTime: "20", // 等待理发的大概时间
+        };
+      }, 1000);
+    }
   },
   1000,
   {
@@ -177,7 +267,7 @@ onShow(() => {
 }
 
 .page-container {
-  height: calc(100vh - 180rpx);
+  height: calc(100vh - 400rpx);
   background-color: #f5f5f5;
   display: flex;
   justify-content: center;
@@ -257,5 +347,15 @@ onShow(() => {
   letter-spacing: 1rpx;
   transition: all 0.3s ease-in-out;
   column-gap: 24rpx;
+}
+
+:deep(.uv-action-sheet__item-wrap) {
+  max-height: 300px;
+  overflow-y: scroll;
+  z-index: 9999 !important;
+}
+
+:deep(.uv-popup__content) {
+  z-index: 9999 !important;
 }
 </style>

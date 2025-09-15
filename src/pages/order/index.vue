@@ -1,36 +1,21 @@
 <template>
   <!-- 根容器：fixed、全屏 -->
   <view class="root">
-    <view class="my_tab_title"
-          :style="{ paddingTop: statusBarHeight }">
-      <view class="header">
+    <view class="header-part">
+      <view class="header-left">
         <view class="header-dot"></view>
         <text class="header-title">订单列表</text>
-        <uv-icon name="setting-fill"
-                 color="#2979ff"
-                 size="24"
-                 @click="toSetting"></uv-icon>
       </view>
+      <image src="../../static/filter.png" class="icon-class" @click="toSetting" />
     </view>
-    <view class="wrapper"
-          :style="{ marginTop: contentTop }">
+    <view class="wrapper">
       <!-- 内容区 -->
       <view class="content">
-        <scroll-view class="scroll-area"
-                     scroll-y
-                     show-scrollbar
-                     refresher-background="#fff"
-                     :scroll-top="scrollTop"
-                     :refresher-enabled="refresherEnabled"
-                     :refresher-triggered="triggered"
-                     @refresherpulling="onPulling"
-                     @refresherrefresh="onRefresh"
-                     @scrolltolower="onReachBottom"
-                     @scroll="roll">
-          <view v-for="(orderItem, orderIndex) in orderListData"
-                :key="orderIndex"
-                :data-value="orderItem"
-                @tap="checkStatus(orderItem)">
+        <scroll-view class="scroll-area" scroll-y show-scrollbar refresher-background="#fff" :scroll-top="scrollTop"
+          :refresher-enabled="refresherEnabled" :refresher-triggered="triggered" @refresherpulling="onPulling"
+          @refresherrefresh="onRefresh" @scrolltolower="onReachBottom" @scroll="roll">
+          <view v-for="(orderItem, orderIndex) in orderListData" :key="orderIndex" :data-value="orderItem"
+            @tap="checkStatus(orderItem)">
             <view class="order-card">
               <view class="order-header">顾客名称：{{ orderItem.userName }}</view>
               <view>预约时间：{{ orderItem.appointmentTime }}</view>
@@ -42,72 +27,42 @@
             </view>
           </view>
 
-          <uni-load-more v-if="orderListData.length > 0"
-                         color="#007AFF"
-                         :status="searchStatus"
-                         :content-text="contentText" />
+          <uni-load-more v-if="orderListData.length > 0" color="#007AFF" :status="searchStatus"
+            :content-text="contentText" />
         </scroll-view>
       </view>
 
       <!-- 回到顶部按钮 -->
-      <view class="back-top"
-            @tap="goTop">
-        <image src="../../static/backtotop.png"
-               class="back-icon" />
+      <view class="back-top" @tap="goTop">
+        <image src="../../static/backtotop.png" class="icon-class" />
       </view>
     </view>
 
-    <uv-popup ref="pageQueryRef"
-              custom-style="border-radius: 20rpx; background-color: #ffffff; color: #fff;"
-              :safeAreaInsetBottom="false"
-              :overlay="false">
+    <uv-popup ref="pageQueryRef" custom-style="border-radius: 20rpx; background-color: #ffffff; color: #fff;"
+      :safeAreaInsetBottom="false" :overlay="false">
       <view class="page_query_modal">
         <view class="search_title">
           搜索条件
         </view>
-        <uv-form :model="pageQuery"
-                 ref="pageQueryFormRef"
-                 label-width="120">
-          <uv-form-item label="开始日期"
-                        name="startDate"
-                        required>
-            <uv-input v-model="pageQuery.startDate"
-                      border="none"
-                      @focus="dateFocus('startDate')"
-                      @clear="beginTimeClear" />
-            <uv-datetime-picker ref="beginTimePicker"
-                                v-model="currentDate"
-                                mode="date"
-                                @confirm="beginTimeConfirm"
-                                :maxDate="maxDate">
+        <uv-form :model="pageQuery" ref="pageQueryFormRef" label-width="120">
+          <uv-form-item label="开始日期" name="startDate" required>
+            <uv-input v-model="pageQuery.startDate" border="none" @focus="dateFocus('startDate')"
+              @clear="beginTimeClear" />
+            <uv-datetime-picker ref="beginTimePicker" v-model="currentDate" mode="date" @confirm="beginTimeConfirm"
+              :maxDate="maxDate">
             </uv-datetime-picker>
           </uv-form-item>
-          <uv-form-item label="结束日期"
-                        name="endDate"
-                        required>
-            <uv-input v-model="pageQuery.endDate"
-                      border="none"
-                      @focus="dateFocus('endDate')"
-                      @clear="endTimeClear" />
-            <uv-datetime-picker ref="endTimePicker"
-                                v-model="currentDate"
-                                mode="date"
-                                @confirm="endTimeConfirm"
-                                :minDate="minDate">
+          <uv-form-item label="结束日期" name="endDate" required>
+            <uv-input v-model="pageQuery.endDate" border="none" @focus="dateFocus('endDate')" @clear="endTimeClear" />
+            <uv-datetime-picker ref="endTimePicker" v-model="currentDate" mode="date" @confirm="endTimeConfirm"
+              :minDate="minDate">
             </uv-datetime-picker>
           </uv-form-item>
           <view class="modal_btn">
-            <uv-button size="large"
-                       type="error"
-                       shape="circle"
-                       text="确定"
-                       style="margin-top: 24rpx;"
-                       @click="pageQuerySubmit"></uv-button>
-            <uv-button size="large"
-                       shape="circle"
-                       text="取消"
-                       style="margin-top: 24rpx;"
-                       @click="pageQueryCancel"></uv-button>
+            <uv-button size="large" type="error" shape="circle" text="确定" style="margin-top: 24rpx;"
+              @click="pageQuerySubmit"></uv-button>
+            <uv-button size="large" shape="circle" text="取消" style="margin-top: 24rpx;"
+              @click="pageQueryCancel"></uv-button>
           </view>
         </uv-form>
       </view>
@@ -160,7 +115,7 @@ const endTimePicker = ref()
 
 const Data = reactive({
   statusBarHeight: uni.getStorageSync('menuInfo').statusBarHeight,
-  contentTop: uni.getStorageSync('menuInfo').contentTop,
+  contentTop: uni.getStorageSync('menuInfo').contentTop - 22 + 'px',
   pageQuery: {
     pageSize: 20,
     pageNum: 1,
@@ -440,20 +395,21 @@ const checkStatus = item => {
   height: 100%;
 }
 
-/* 主背景 */
-.wrapper {
-  background-color: #efefef;
-  width: 100%;
-  display: flex;
-  flex-direction: column;
-}
-
 /* 顶部标题栏 */
-.header {
+.header-part {
   display: flex;
+  justify-content: space-between;
   align-items: center;
   background-color: #ffffff;
   padding: 0 24rpx;
+  height: 100rpx;
+}
+
+.header-left {
+  display: flex;
+  align-items: center;
+  font-size: 32rpx;
+  font-weight: 600;
 }
 
 .header-dot {
@@ -470,6 +426,14 @@ const checkStatus = item => {
   margin-right: 24rpx;
 }
 
+/* 主背景 */
+.wrapper {
+  background-color: #efefef;
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+}
+
 /* 内容区 */
 .content {
   flex: 1;
@@ -479,7 +443,7 @@ const checkStatus = item => {
 .scroll-area {
   flex: 1;
   overflow-y: scroll;
-  height: calc(100vh - 200rpx);
+  height: 100vh;
   margin-bottom: 24rpx;
 }
 
@@ -514,6 +478,7 @@ const checkStatus = item => {
 .finished {
   background-color: #67c23a;
 }
+
 // 已完成
 .order-invalid {
   background-color: #909399;
@@ -531,9 +496,11 @@ const checkStatus = item => {
 .order_20 {
   background-color: #67c23a;
 }
+
 .order_25 {
   background-color: #409eff;
 }
+
 .order_30 {
   background-color: #f56c6c;
 }
@@ -568,9 +535,9 @@ const checkStatus = item => {
     0rpx 30rpx 24rpx rgba(0, 0, 0, 0.22);
 }
 
-.back-icon {
-  width: 54rpx;
-  height: 54rpx;
+.icon-class {
+  width: 44rpx;
+  height: 44rpx;
 }
 
 .back-text {

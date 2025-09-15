@@ -14,7 +14,7 @@ onShow(() => {
       let menuBorderRadius = menuButtonInfo.height / 2 + "px";
       let menuRight = result.screenWidth - menuButtonInfo.right + "px";
       let menuTop = menuButtonInfo.top + "px";
-      let contentTop = result.statusBarHeight + 44 + "px";
+      let contentTop = result?.statusBarHeight || 0 + 44 + "px";
 
       let menuInfo = {
         statusBarHeight: statusBarHeight,
